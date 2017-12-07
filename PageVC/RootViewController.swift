@@ -9,18 +9,20 @@
 import UIKit
 
 class RootViewController: UIViewController, UIPageViewControllerDelegate {
-
+    
+    @IBOutlet weak var segentControl: UISegmentedControl!
+    
     var pageViewController: UIPageViewController?
-
+    var currentPage = 0
 
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         // Configure the page view controller and add it as a child view controller.
-        self.pageViewController = UIPageViewController(transitionStyle: .pageCurl, navigationOrientation: .horizontal, options: nil)
+        self.pageViewController = UIPageViewController(transitionStyle: .scroll, navigationOrientation: .horizontal, options: nil)
         self.pageViewController!.delegate = self
 
-        let startingViewController: DataViewController = self.modelController.viewControllerAtIndex(0, storyboard: self.storyboard!)!
+        let startingViewController = self.modelController.viewControllerAtIndex(0, storyboard: self.storyboard!)!
         let viewControllers = [startingViewController]
         self.pageViewController!.setViewControllers(viewControllers, direction: .forward, animated: false, completion: {done in })
 
@@ -43,7 +45,30 @@ class RootViewController: UIViewController, UIPageViewControllerDelegate {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
-
+    
+    @IBAction func changePageAction(_ sender: UISegmentedControl) {
+        gotoPage(sender.selectedSegmentIndex)
+    }
+    
+    func gotoPage(_ page: Int) {
+        let vc = self.modelController.viewControllerAtIndex(page, storyboard: self.storyboard!)!
+        
+        var direction: UIPageViewControllerNavigationDirection = .forward
+        if page < currentPage {
+            direction = .reverse
+        }
+        currentPage = page
+        self.segentControl.isUserInteractionEnabled = false
+        self.pageViewController?.setViewControllers([vc],
+                                                    direction: direction,
+                                                    animated: true,
+                                                    completion:
+            { Bool in
+                self.segentControl.isUserInteractionEnabled = true
+            }
+        )
+    }
+    
     var modelController: ModelController {
         // Return the model controller object, creating it if necessary.
         // In more complex implementations, the model controller may be passed to the view controller.
@@ -56,7 +81,16 @@ class RootViewController: UIViewController, UIPageViewControllerDelegate {
     var _modelController: ModelController? = nil
 
     // MARK: - UIPageViewController delegate methods
-
+    func pageViewController(_ pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
+        if (!completed) {
+            return
+        }
+        
+        let page = self.modelController.indexOfViewController(pageViewController.viewControllers!.first!)
+        self.segentControl.selectedSegmentIndex = page
+        self.currentPage = page
+    }
+    
     func pageViewController(_ pageViewController: UIPageViewController, spineLocationFor orientation: UIInterfaceOrientation) -> UIPageViewControllerSpineLocation {
         if (orientation == .portrait) || (orientation == .portraitUpsideDown) || (UIDevice.current.userInterfaceIdiom == .phone) {
             // In portrait orientation or on iPhone: Set the spine position to "min" and the page view controller's view controllers array to contain just one view controller. Setting the spine position to 'UIPageViewControllerSpineLocationMid' in landscape orientation sets the doubleSided property to true, so set it to false here.
