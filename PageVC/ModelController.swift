@@ -40,14 +40,15 @@ class ModelController: NSObject, UIPageViewControllerDataSource {
         
         if index >= pageViewControllers.count {
             if index == 0 {
-                // Create a new view controller and pass suitable data.
                 viewController = storyboard.instantiateViewController(withIdentifier: "DataViewController")
-//                viewController.dataObject = "First"//self.pageData[index]
             }
             else if index == 1 {
                 viewController = storyboard.instantiateViewController(withIdentifier: "SecondViewController")
             }
             else if index == 2 {
+                if pageViewControllers.count < 3 {
+                    _ = viewControllerAtIndex(index-1, storyboard: storyboard)
+                }
                 viewController = storyboard.instantiateViewController(withIdentifier: "ThirdViewController")
             }
         }
